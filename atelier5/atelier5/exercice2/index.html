@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercice 2 - Gestion de Fichiers</title>
+    <style>
+        body { font-family: Arial; margin: 10px; background: #eee; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 10px; }
+        h1 { text-align: center; font-size: 1.5em; }
+        .section { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        h2 { font-size: 1em; }
+        input, button { padding: 5px; margin: 5px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:disabled { background: #999; cursor: not-allowed; }
+        .file-item { margin: 5px; padding: 5px; border: 1px solid #ddd; }
+        .status { padding: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion de Fichiers</h1>
+        
+        <!-- Upload -->
+        <div class="section">
+            <h2>1. Télécharger un fichier</h2>
+            <input type="file" id="fileInput" multiple>
+            <button onclick="uploadFile()">Uploader</button>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <!-- Liste -->
+        <div class="section">
+            <h2>2. Liste des fichiers</h2>
+            <button onclick="fetchFiles()">Actualiser</button>
+            <div id="filesList"><p>Cliquez sur Actualiser</p></div>
+        </div>
+
+        <!-- Chaînage -->
+        <div class="section">
+            <h2>3. Upload + Liste</h2>
+            <button onclick="uploadAndRefresh()">Exécuter</button>
+            <div id="chainStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost/';
+
+        // Télécharger un fichier
+        async function uploadFile() {
+            const files = document.getElementById('fileInput').files;
+            if (!files.length) {
+                showStatus('error', 'Choisissez un fichier', 'uploadStatus');
+                return;
+            }
+
+            showStatus('success', 'Envoi en cours...', 'uploadStatus');
+            document.getElementById('fileInput').disabled = true;
+
+            try {
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await fetch(API_URL + 'upload.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) throw new Error('Erreur upload');
+                    const result = await response.json();
+                    if (result.status !== 'success') throw new Error(result.message);
+                }
+                showStatus('success', 'Fichier(s) uploadé(s) !', 'uploadStatus');
+                document.getElementById('fileInput').value = '';
+            } catch (error) {
+                showStatus('error', `Erreur: ${error.message}`, 'uploadStatus');
+            } finally {
+                document.getElementById('fileInput').disabled = false;
+            }
+        }
+
+        // Récupérer la liste des fichiers
+        async function fetchFiles() {
+            const filesList = document.getElementById('filesList');
+            filesList.innerHTML = '<p>Chargement...</p>';
+            try {
+                const response = await fetch(API_URL + 'files.php');
+                if (!response.ok) throw new Error('Erreur liste');
+                const files = await response.json();
+                filesList.innerHTML = files.length ? files.map(file => `
+                    <div class="file-item">
+                        ${file.name} (${file.size} bytes)
+                        <button onclick="downloadFile('${file.name}')">Télécharger</button>
+                    </div>
+                `).join('') : '<p>Aucun fichier</p>';
+            } catch (error) {
+                filesList.innerHTML = `<p class="error">Erreur: ${error.message}</p>`;
+            }
+        }
+
+        // Chaînage : upload + liste
+        async function uploadAndRefresh() {
+            const files = document.getElementById('fileInput').files;
+            if (!files.length) {
+                showStatus('error', 'Choisissez un fichier', 'chainStatus');
+                return;
+            }
+
+            showStatus('success', 'Upload en cours...', 'chainStatus');
+            try {
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await fetch(API_URL + 'upload.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) throw new Error('Erreur upload');
+                    const result = await response.json();
+                    if (result.status !== 'success') throw new Error(result.message);
+                }
+                showStatus('success', 'Récupération liste...', 'chainStatus');
+                const response = await fetch(API_URL + 'files.php');
+                if (!response.ok) throw new Error('Erreur liste');
+                const files = await response.json();
+                document.getElementById('filesList').innerHTML = files.length ? files.map(file => `
+                    <div class="file-item">
+                        ${file.name} (${file.size} bytes)
+                        <button onclick="downloadFile('${file.name}')">Télécharger</button>
+                    </div>
+                `).join('') : '<p>Aucun fichier</p>';
+                showStatus('success', 'Terminé !', 'chainStatus');
+                document.getElementById('fileInput').value = '';
+            } catch (error) {
+                showStatus('error', `Erreur: ${error.message}`, 'chainStatus');
+            }
+        }
+
+        // Télécharger un fichier
+        async function downloadFile(filename) {
+            try {
+                const response = await fetch(API_URL + `download.php?id=${filename}`);
+                if (!response.ok) throw new Error('Erreur téléchargement');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                showStatus('error', `Erreur: ${error.message}`, 'filesList');
+            }
+        }
+
+        // Afficher un message de statut
+        function showStatus(type, message, id) {
+            document.getElementById(id).innerHTML = `<p class="${type}">${message}</p>`;
+        }
+    </script>
+</body>
+</html>

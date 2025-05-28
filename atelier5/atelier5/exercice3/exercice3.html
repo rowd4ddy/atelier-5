@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exercice 3 - Gestion des Salles</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        .room-item { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Ajouter une salle</h2>
+    <form id="roomForm">
+        <input type="text" id="name" placeholder="Nom de la salle" required>
+        <input type="number" id="capacity" placeholder="Capacité" required>
+        <button type="submit">Ajouter</button>
+    </form>
+
+    <h2>Liste des salles</h2>
+    <div id="roomList"></div>
+
+    <script>
+        const form = document.getElementById('roomForm');
+        const roomList = document.getElementById('roomList');
+
+        function loadRooms() {
+            fetch('exercice3.php')
+                .then(response => response.json())
+                .then(data => {
+                    roomList.innerHTML = '';
+                    data.forEach(room => {
+                        const div = document.createElement('div');
+                        div.className = 'room-item';
+                        div.innerHTML = `<strong>${room.name}</strong> - Capacité : ${room.capacity}`;
+                        roomList.appendChild(div);
+                    });
+                });
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('capacity', document.getElementById('capacity').value);
+
+            fetch('exercice3.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(() => {
+                form.reset();
+                loadRooms();
+            });
+        });
+
+        window.onload = loadRooms;
+    </script>
+</body>
+</html>

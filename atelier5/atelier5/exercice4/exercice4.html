@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suivi des Stocks</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+</head>
+<body>
+    <h1>Stock des Produits</h1>
+
+    <div>
+        <input type="text" id="productName" placeholder="Nom du produit" />
+        <input type="number" id="productQty" placeholder="Quantité" />
+        <button onclick="addStock()">Ajouter</button>
+    </div>
+
+    <div id="chart-container" style="width:100%; height:400px;"></div>
+
+    <script>
+        const API_URL = 'exercice4.php';
+        let chart;
+
+        function fetchStocks() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(data => {
+                    const names = data.map(s => s.product_name);
+                    const quantities = data.map(s => s.quantity);
+                    updateChart(names, quantities);
+                });
+        }
+
+        function updateChart(names, quantities) {
+            if (!chart) {
+                chart = Highcharts.chart('chart-container', {
+                    chart: { type: 'column' },
+                    title: { text: 'Quantité des Produits' },
+                    xAxis: { categories: names },
+                    yAxis: { title: { text: 'Quantité' } },
+                    series: [{ name: 'Stock', data: quantities }]
+                });
+            } else {
+                chart.xAxis[0].setCategories(names);
+                chart.series[0].setData(quantities);
+            }
+        }
+
+        function addStock() {
+            const name = document.getElementById('productName').value;
+            const qty = document.getElementById('productQty').value;
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_name: name, quantity: Number(qty) })
+            }).then(fetchStocks);
+        }
+
+       
+        setInterval(fetchStocks, 3000);
+
+        window.onload = fetchStocks;
+    </script>
+</body>
+</html>

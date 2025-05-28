@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercice Programmation Asynchrone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .profile {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .hidden {
+            display: none;
+        }
+        .orders {
+            margin-top: 20px;
+        }
+        .order {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Atelier 5 : Programmation Asynchrone</h1>
+
+    <div>
+        <button onclick="exercice1()">Exercice 1 - Récupérer profil</button>
+        <button onclick="exercice3()">Exercice 3 - Tous les utilisateurs</button>
+        <button onclick="exercice4()">Exercice 4 - Chaîner les promises</button>
+    </div>
+
+    <div id="loading" class="loading hidden">Chargement...</div>
+
+    <div id="profileSection" class="hidden"></div>
+    <div id="usersSection" class="hidden"></div>
+    <div id="ordersSection" class="hidden"></div>
+</div>
+
+<script>
+    // Exercice 1 - Données de base
+    const userData = {
+        name: 'John Doe',
+        email: 'johndoe@example.com',
+        avatar: 'avatar.png',
+        gender: 'M'
+    };
+
+    // Exercice 3 - Données étendues
+    const usersData = [
+        {
+            id: 1,
+            name: 'John Doe',
+            email: 'johndoe@example.com',
+            login: 'johndoe',
+            password: 'password123',
+            address: '123 Rue de la Paix, Paris',
+            phone: '01 23 45 67 89'
+        },
+        {
+            id: 2,
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            login: 'janesmith',
+            password: 'motdepasse456',
+            address: '456 Avenue Victor Hugo, Lyon',
+            phone: '04 56 78 90 12'
+        },
+        {
+            id: 3,
+            name: 'Pierre Martin',
+            email: 'pierre@example.com',
+            login: 'pmartin',
+            password: 'secret789',
+            address: '789 Boulevard Saint-Germain, Marseille',
+            phone: '04 91 23 45 67'
+        }
+    ];
+
+    // Exercice 4 - Données des commandes
+    const ordersData = [
+        { id: 1, product: 'Livre JavaScript', price: 25.99, date: '2023-11-01' },
+        { id: 2, product: 'Clavier', price: 89.50, date: '2023-11-15' },
+        { id: 3, product: 'Souris', price: 29.99, date: '2023-11-20' }
+    ];
+
+    // Fonction utilitaire pour cacher toutes les sections
+    function hideAllSections() {
+        document.getElementById('profileSection').classList.add('hidden');
+        document.getElementById('usersSection').classList.add('hidden');
+        document.getElementById('ordersSection').classList.add('hidden');
+    }
+
+    // Fonction utilitaire pour afficher le loading
+    function showLoading() {
+        document.getElementById('loading').classList.remove('hidden');
+    }
+
+    // Fonction utilitaire pour cacher le loading
+    function hideLoading() {
+        document.getElementById('loading').classList.add('hidden');
+    }
+
+    // Exercice 1 - Fonction asynchrone qui simule la récupération de données
+    async function fetchUserData() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(userData);
+            }, 2000); // Délai de 2 secondes
+        });
+    }
+
+    // Exercice 1 - Traitement et affichage des données
+    async function exercice1() {
+        console.log("Exercice 1 - Début");
+        hideAllSections();
+        showLoading();
+
+        try {
+            const user = await fetchUserData();
+            console.log("Données récupérées:", user);
+
+            // Traitement des données
+            const processedData = {
+                ...user,
+                fullName: user.name.toUpperCase(),
+                genderText: user.gender === 'M' ? 'Homme' : 'Femme'
+            };
+
+            hideLoading();
+            displayProfile(processedData);
+        } catch (error) {
+            console.error("Erreur:", error);
+            hideLoading();
+        }
+    }
+
+    // Fonction pour afficher le profil
+    function displayProfile(user) {
+        const profileSection = document.getElementById('profileSection');
+        profileSection.innerHTML = `
+                <div class="profile">
+                    <h2>Profil Utilisateur</h2>
+                    <p><strong>Nom:</strong> ${user.fullName}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Genre:</strong> ${user.genderText}</p>
+                    <p><strong>Avatar:</strong> ${user.avatar}</p>
+                </div>
+            `;
+        profileSection.classList.remove('hidden');
+    }
+
+    // Exercice 3 - Fonction pour récupérer tous les utilisateurs
+    async function fetchAllUsers() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(usersData);
+            }, 1500); // Délai de 1.5 secondes
+        });
+    }
+
+    // Exercice 3 - Affichage des utilisateurs dans un tableau
+    async function exercice3() {
+        console.log("Exercice 3 - Début");
+        hideAllSections();
+        showLoading();
+
+        try {
+            const users = await fetchAllUsers();
+            console.log("Tous les utilisateurs:", users);
+
+            hideLoading();
+            displayUsersTable(users);
+        } catch (error) {
+            console.error("Erreur:", error);
+            hideLoading();
+        }
+    }
+
+    // Fonction pour afficher le tableau des utilisateurs
+    function displayUsersTable(users) {
+        const usersSection = document.getElementById('usersSection');
+
+        let tableHTML = `
+                <h2>Liste des Utilisateurs</h2>
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Login</th>
+                        <th>Mot de passe</th>
+                        <th>Adresse</th>
+                        <th>Téléphone</th>
+                    </tr>
+            `;
+
+        users.forEach(user => {
+            tableHTML += `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.login}</td>
+                        <td>${user.password}</td>
+                        <td>${user.address}</td>
+                        <td>${user.phone}</td>
+                    </tr>
+                `;
+        });
+
+        tableHTML += '</table>';
+        usersSection.innerHTML = tableHTML;
+        usersSection.classList.remove('hidden');
+    }
+
+    // Exercice 4 - Fonction pour récupérer les commandes
+    async function fetchUserOrders() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(ordersData);
+            }, 1000); // Délai de 1 seconde
+        });
+    }
+
+    // Exercice 4 - Chaîner les promises
+    async function exercice4() {
+        console.log("Exercice 4 - Début du chaînage");
+        hideAllSections();
+        showLoading();
+
+        try {
+            // Première promise - récupérer les données utilisateur
+            console.log("Étape 1: Récupération des données utilisateur...");
+            const user = await fetchUserData();
+            console.log("Données utilisateur récupérées:", user);
+
+            // Deuxième promise - récupérer les commandes
+            console.log("Étape 2: Récupération des commandes...");
+            const orders = await fetchUserOrders();
+            console.log("Commandes récupérées:", orders);
+
+            hideLoading();
+            displayUserWithOrders(user, orders);
+            console.log("Chaînage terminé avec succès!");
+        } catch (error) {
+            console.error("Erreur dans le chaînage:", error);
+            hideLoading();
+        }
+    }
+
+    // Fonction pour afficher l'utilisateur avec ses commandes
+    function displayUserWithOrders(user, orders) {
+        // Afficher le profil
+        const processedUser = {
+            ...user,
+            fullName: user.name.toUpperCase(),
+            genderText: user.gender === 'M' ? 'Homme' : 'Femme'
+        };
+        displayProfile(processedUser);
+
+        // Afficher les commandes
+        const ordersSection = document.getElementById('ordersSection');
+        let ordersHTML = '<div class="orders"><h2>Commandes de ' + user.name + '</h2>';
+
+        orders.forEach(order => {
+            ordersHTML += `
+                    <div class="order">
+                        <p><strong>Commande #${order.id}</strong></p>
+                        <p>Produit: ${order.product}</p>
+                        <p>Prix: ${order.price}€</p>
+                        <p>Date: ${order.date}</p>
+                    </div>
+                `;
+        });
+
+        ordersHTML += '</div>';
+        ordersSection.innerHTML = ordersHTML;
+        ordersSection.classList.remove('hidden');
+    }
+
+    console.log("Page chargée - Prêt pour les exercices!");
+</script>
+</body>
+</html>
